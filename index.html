@@ -204,6 +204,30 @@
     .checklist li { margin: 9px 0; display: flex; gap: 8px; align-items: flex-start; }
     .dot { width: 9px; height: 9px; border-radius: 999px; margin-top: 7px; background: var(--success); flex: 0 0 auto; }
 
+
+    .page { display: none; }
+    .page.active { display: block; }
+    .today-list { display: grid; gap: 12px; }
+    .bet-work-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+      padding: 16px; border-bottom: 1px solid var(--line);
+    }
+    .bet-work-item:last-child { border-bottom: 0; }
+    .work-main { display: grid; gap: 9px; }
+    .work-title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-weight:800; }
+    .work-title .event { font-size: 16px; }
+    .work-meta { display:grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap:10px; }
+    .work-meta div { background: rgba(15,23,42,.72); border:1px solid var(--line); border-radius:12px; padding:10px; }
+    .work-meta small { display:block; color:var(--muted); margin-bottom:4px; }
+    .work-actions { display:flex; flex-direction:column; gap:8px; min-width:150px; }
+    .copy-ok { color:#86efac; font-size:12px; font-weight:750; min-height:16px; }
+    .empty-page { padding: 24px; color: var(--muted); line-height: 1.6; }
+    @media (max-width: 900px) {
+      .bet-work-item { grid-template-columns: 1fr; }
+      .work-meta { grid-template-columns: 1fr; }
+      .work-actions { flex-direction:row; flex-wrap:wrap; }
+    }
+
     @media (max-width: 1100px) {
       .app { grid-template-columns: 1fr; }
       aside { position: relative; height: auto; }
@@ -225,12 +249,13 @@
       </div>
 
       <nav>
-        <a class="active" href="#">▦ Dashboard</a>
-        <a href="#">✓ Review Queue</a>
-        <a href="#">↔ Transfers</a>
-        <a href="#">⧉ Dubletten</a>
-        <a href="#">☰ Audit Log</a>
-        <a href="#">⚙ Konfiguration</a>
+        <a class="active" href="#dashboard" data-page="dashboard" onclick="navigate(event, 'dashboard')">▦ Dashboard</a>
+        <a href="#today" data-page="today" onclick="navigate(event, 'today')">☑ Heutige Wetten</a>
+        <a href="#review" data-page="review" onclick="navigate(event, 'review')">✓ Review Queue</a>
+        <a href="#transfers" data-page="transfers" onclick="navigate(event, 'transfers')">↔ Transfers</a>
+        <a href="#duplicates" data-page="duplicates" onclick="navigate(event, 'duplicates')">⧉ Dubletten</a>
+        <a href="#audit" data-page="audit" onclick="navigate(event, 'audit')">☰ Audit Log</a>
+        <a href="#config" data-page="config" onclick="navigate(event, 'config')">⚙ Konfiguration</a>
       </nav>
 
       <div class="safety-box">
@@ -240,6 +265,7 @@
     </aside>
 
     <main>
+      <div id="page-dashboard" class="page active">
       <section class="topbar">
         <div>
           <h2>Tagesliste Wetten & Angebote</h2>
@@ -436,10 +462,201 @@
           </div>
         </div>
       </section>
+
+      </div>
+
+      <div id="page-today" class="page">
+        <section class="topbar">
+          <div>
+            <h2>Heutige Wetten abarbeiten</h2>
+            <p class="subtitle">Kompakte Liste mit nur den Infos, die du zum Setzen oder Überspringen brauchst.</p>
+          </div>
+          <div class="actions">
+            <button onclick="copyAllToday()">Alle sichtbaren Infos kopieren</button>
+            <button class="primary" onclick="navigate(null, 'dashboard')">Zurück zum Dashboard</button>
+          </div>
+        </section>
+
+        <section class="cards">
+          <div class="card"><small>Heute offen</small><div class="metric warn" id="todayOpenCount">4</div></div>
+          <div class="card"><small>Gesetzt</small><div class="metric good" id="todayPlacedCount">0</div></div>
+          <div class="card"><small>Übersprungen</small><div class="metric bad" id="todaySkippedCount">0</div></div>
+          <div class="card"><small>Hinweis</small><div class="metric" style="font-size:16px; color:#cbd5e1;">Manuell bestätigen</div></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Abarbeitungsliste</div>
+            <span class="subtitle">Pro Eintrag kopieren, dann rechts als gesetzt oder übersprungen markieren.</span>
+          </div>
+          <div class="today-list" id="todayList">
+            <article class="bet-work-item" data-work-status="offen">
+              <div class="work-main">
+                <div class="work-title"><span class="badge open">offen</span><span class="event">Bayern – Dortmund</span></div>
+                <div class="work-meta">
+                  <div><small>Buchmacher</small><strong>Bet365</strong></div>
+                  <div><small>Spiel / Ereignis</small><strong>Bayern – Dortmund</strong></div>
+                  <div><small>Markt / Auswahl</small><strong>Sieg: Bayern</strong></div>
+                  <div><small>Quoten</small><strong>Back 2.10 · Lay 2.12</strong></div>
+                </div>
+                <span class="copy-ok"></span>
+              </div>
+              <div class="work-actions">
+                <button onclick="copyWorkItem(this)">Herauskopieren</button>
+                <button class="primary" onclick="setWorkStatus(this, 'gesetzt')">Als gesetzt</button>
+                <button class="danger" onclick="setWorkStatus(this, 'übersprungen')">Überspringen</button>
+              </div>
+            </article>
+
+            <article class="bet-work-item" data-work-status="offen">
+              <div class="work-main">
+                <div class="work-title"><span class="badge checked">geprüft</span><span class="event">Arsenal – Chelsea</span></div>
+                <div class="work-meta">
+                  <div><small>Buchmacher</small><strong>Bwin</strong></div>
+                  <div><small>Spiel / Ereignis</small><strong>Arsenal – Chelsea</strong></div>
+                  <div><small>Markt / Auswahl</small><strong>Über/Unter: Über 2.5</strong></div>
+                  <div><small>Quoten</small><strong>Back 1.95 · Lay 1.98</strong></div>
+                </div>
+                <span class="copy-ok"></span>
+              </div>
+              <div class="work-actions">
+                <button onclick="copyWorkItem(this)">Herauskopieren</button>
+                <button class="primary" onclick="setWorkStatus(this, 'gesetzt')">Als gesetzt</button>
+                <button class="danger" onclick="setWorkStatus(this, 'übersprungen')">Überspringen</button>
+              </div>
+            </article>
+
+            <article class="bet-work-item" data-work-status="offen">
+              <div class="work-main">
+                <div class="work-title"><span class="badge placed">platziert</span><span class="event">Real Madrid – Sevilla</span></div>
+                <div class="work-meta">
+                  <div><small>Buchmacher</small><strong>Betano</strong></div>
+                  <div><small>Spiel / Ereignis</small><strong>Real Madrid – Sevilla</strong></div>
+                  <div><small>Markt / Auswahl</small><strong>Handicap: Real -1</strong></div>
+                  <div><small>Quoten</small><strong>Back 2.35 · Lay 2.38</strong></div>
+                </div>
+                <span class="copy-ok"></span>
+              </div>
+              <div class="work-actions">
+                <button onclick="copyWorkItem(this)">Herauskopieren</button>
+                <button class="primary" onclick="setWorkStatus(this, 'gesetzt')">Als gesetzt</button>
+                <button class="danger" onclick="setWorkStatus(this, 'übersprungen')">Überspringen</button>
+              </div>
+            </article>
+
+            <article class="bet-work-item" data-work-status="offen">
+              <div class="work-main">
+                <div class="work-title"><span class="badge error">Fehler</span><span class="event">Inter – Milan</span></div>
+                <div class="work-meta">
+                  <div><small>Buchmacher</small><strong>Tipico</strong></div>
+                  <div><small>Spiel / Ereignis</small><strong>Inter – Milan</strong></div>
+                  <div><small>Markt / Auswahl</small><strong>Beide treffen: Ja</strong></div>
+                  <div><small>Quoten</small><strong>Back 1.72 · Lay 1.70</strong></div>
+                </div>
+                <span class="copy-ok"></span>
+              </div>
+              <div class="work-actions">
+                <button onclick="copyWorkItem(this)">Herauskopieren</button>
+                <button class="primary" onclick="setWorkStatus(this, 'gesetzt')">Als gesetzt</button>
+                <button class="danger" onclick="setWorkStatus(this, 'übersprungen')">Überspringen</button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div id="page-review" class="page"><section class="topbar"><div><h2>Review Queue</h2><p class="subtitle">Mockup-Seite. Navigation funktioniert, Inhalte können später erweitert werden.</p></div></section><section class="panel"><div class="empty-page">Hier erscheinen später alle Einträge, die vor Transfer oder Submit geprüft werden müssen.</div></section></div>
+      <div id="page-transfers" class="page"><section class="topbar"><div><h2>Transfers</h2><p class="subtitle">Mockup-Seite für mbtracker/man-tracker Übergaben.</p></div></section><section class="panel"><div class="empty-page">Hier werden später vorausgefüllte und übertragene Wetten angezeigt.</div></section></div>
+      <div id="page-duplicates" class="page"><section class="topbar"><div><h2>Dubletten</h2><p class="subtitle">Mockup-Seite für Dublettenprüfung.</p></div></section><section class="panel"><div class="empty-page">Hier werden später potenzielle Dubletten mit Vergleichswerten gelistet.</div></section></div>
+      <div id="page-audit" class="page"><section class="topbar"><div><h2>Audit Log</h2><p class="subtitle">Mockup-Seite für vollständige Protokollansicht.</p></div></section><section class="panel"><div class="audit-list" id="auditFull"></div></section></div>
+      <div id="page-config" class="page"><section class="topbar"><div><h2>Konfiguration</h2><p class="subtitle">Mockup-Seite für lokale Einstellungen.</p></div></section><section class="panel"><div class="empty-page">Später: Selektoren, Mapping, Rate-Limits und lokale Pfade.</div></section></div>
+
     </main>
   </div>
 
   <script>
+    function navigate(event, page) {
+      if (event) event.preventDefault();
+      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById(`page-${page}`);
+      if (target) target.classList.add('active');
+
+      document.querySelectorAll('nav a').forEach(a => a.classList.toggle('active', a.dataset.page === page));
+      history.replaceState(null, '', `#${page}`);
+      if (page === 'audit') syncAuditPage();
+    }
+
+    function bootNavigation() {
+      const page = (location.hash || '#dashboard').replace('#', '');
+      navigate(null, document.getElementById(`page-${page}`) ? page : 'dashboard');
+    }
+
+    function getWorkItemText(item) {
+      const blocks = [...item.querySelectorAll('.work-meta div')].map(div => {
+        const label = div.querySelector('small').textContent.trim();
+        const value = div.querySelector('strong').textContent.trim();
+        return `${label}: ${value}`;
+      });
+      return blocks.join('\n');
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (error) {
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        tmp.remove();
+        return true;
+      }
+    }
+
+    async function copyWorkItem(button) {
+      const item = button.closest('.bet-work-item');
+      const text = getWorkItemText(item);
+      await copyText(text);
+      item.querySelector('.copy-ok').textContent = 'Kopiert ✓';
+      addAudit(`Wettinfo für „${item.querySelector('.event').textContent}“ kopiert.`);
+    }
+
+    async function copyAllToday() {
+      const text = [...document.querySelectorAll('#todayList .bet-work-item')]
+        .filter(item => item.dataset.workStatus !== 'übersprungen')
+        .map(getWorkItemText)
+        .join('\n\n---\n\n');
+      await copyText(text);
+      addAudit('Alle heutigen Wettinfos wurden kopiert.');
+    }
+
+    function setWorkStatus(button, status) {
+      const item = button.closest('.bet-work-item');
+      item.dataset.workStatus = status;
+      const badge = item.querySelector('.badge');
+      badge.textContent = status;
+      badge.className = `badge ${status === 'gesetzt' ? 'confirmed' : 'skipped'}`;
+      item.querySelector('.copy-ok').textContent = status === 'gesetzt' ? 'Als gesetzt markiert ✓' : 'Übersprungen';
+      updateTodayCounts();
+      addAudit(`„${item.querySelector('.event').textContent}“ als „${status}“ markiert.`);
+    }
+
+    function updateTodayCounts() {
+      const items = [...document.querySelectorAll('#todayList .bet-work-item')];
+      const placed = items.filter(i => i.dataset.workStatus === 'gesetzt').length;
+      const skipped = items.filter(i => i.dataset.workStatus === 'übersprungen').length;
+      document.getElementById('todayPlacedCount').textContent = placed;
+      document.getElementById('todaySkippedCount').textContent = skipped;
+      document.getElementById('todayOpenCount').textContent = items.length - placed - skipped;
+    }
+
+    function syncAuditPage() {
+      const full = document.getElementById('auditFull');
+      if (full) full.innerHTML = document.querySelector('.audit-list').innerHTML;
+    }
+
     function filterRows() {
       const search = document.getElementById('search').value.toLowerCase();
       const bookmaker = document.getElementById('bookmaker').value;
@@ -524,6 +741,8 @@
       item.innerHTML = `<span class="audit-time">${now}</span><span><span class="audit-tag">UI</span> ${message}</span><span>User</span>`;
       list.prepend(item);
     }
+
+    bootNavigation();
   </script>
 </body>
 </html>
